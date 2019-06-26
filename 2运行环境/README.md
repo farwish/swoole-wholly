@@ -10,11 +10,11 @@
 ### Linux + Docker
 
 1.安装 Docker  
-（https://github.com/phvia/dkc#安装-docker）
+    https://github.com/phvia/dkc#安装-docker
 
 2.拉取镜像  
-（docker pull phvia/web-swoole-4.2.13:7.1.19-fpm）
+    docker pull phvia/web-swoole-4.2.13:7.1.19-fpm
 
 3.运行进入容器  
-（docker run -it -p 7749:7749 -v /home/ubuntu:/usr/share/nginx/html ImageID bash）
+    docker run -it -p 7749:7749 -v /home/ubuntu:/usr/share/nginx/html ImageID bash
 
