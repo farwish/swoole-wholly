@@ -7,7 +7,7 @@
 
 两种方式都可以，不影响脚本的运行，编译安装更直观，Docker 更快速。
 
-> Linux + Docker
+### Linux + Docker
 
 1.安装 Docker  
 （https://github.com/phvia/dkc#安装-docker）
