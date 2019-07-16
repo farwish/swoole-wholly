@@ -1,4 +1,4 @@
-#Swoole 服务器
+# Swoole 服务器
 
 ## TCP 服务器
 
@@ -64,6 +64,15 @@ Swoole UDP Server 特点
 Swoole UDP Server 参数
 ```
 参数和 Swoole TCP Server 基本一致，只需要 $socket_type 指定为 SWOOLE_SOCK_UDP 类型。
+```
+
+备注
+```
+在容器里暴露 udp 端口需要指定类型，否则默认是 tcp 类型：
+$ docker run -it -p 7748:7748/udp -v /home/ubuntu:/usr/share/nginx/html ImageID bash
+
+终端连接 udp 服务器可以用 netcat 或 nc：
+$ netcat -u ip port
 ```
 
 更多信息@doc https://wiki.swoole.com/wiki/page/14.html
