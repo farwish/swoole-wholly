@@ -1,4 +1,11 @@
 <?php
+/**
+ * rand.php
+ *
+ * github.com/farwish/swoole-wholly
+ *
+ * @author ercom
+ */
 
 $workerNum = 3;
 

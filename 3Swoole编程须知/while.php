@@ -1,4 +1,11 @@
 <?php
+/**
+ * while.php
+ *
+ * github.com/farwish/swoole-wholly
+ *
+ * @author ercom
+ */
 
 // 网络客户端/睡眠函数协程化
 Swoole\Runtime::enableCoroutine(true);

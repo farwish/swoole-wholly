@@ -1,4 +1,11 @@
 <?php
+/**
+ * udp.php
+ *
+ * github.com/farwish/swoole-wholly
+ *
+ * @author ercom
+ */
 
 // 对比Swoole TCP Server, UDP Server 第四个参数为 SWOOLE_SOCK_UDP
 $server = new Swoole\Server("0.0.0.0", 7748, SWOOLE_PROCESS, SWOOLE_SOCK_UDP);

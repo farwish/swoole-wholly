@@ -76,3 +76,72 @@ $ netcat -u ip port
 ```
 
 更多信息@doc https://wiki.swoole.com/wiki/page/14.html
+
+## Server 四层生命周期
+
+PHP 完整生命周期
+```
+执行PHP文件
+    PHP扩展模块初始化（MINIT）
+        PHP扩展请求初始化（RINIT）
+        执行 PHP 逻辑
+        PHP扩展请求结束（RSHUTDOWN）
+        PHP脚本清理
+    PHP扩展模块结束（MSHUTDOWN）
+终止PHP
+```
+
+PHP 请求生命周期
+```
+如果是 cli 执行 PHP 脚本，那么会完整执行整个过程，因为存在进程创建。
+
+如果是 php-fpm 请求响应阶段，那么会执行中间四步过程，等到 fpm 进程退出才执行扩展模块清理工作。
+```
+
+Swoole Server 四层生命周期
+
+```
+程序全局期：Server->start 之前创建的对象资源，持续驻留内存，worker共享。
+            全局期代码在 Server 结束时才会释放，reload 无效。
+
+进程全局期：Server 启动后创建多个进程，它们内存空间独立，非共享内存。
+            worker 进程启动后（onWorkerStart）引入的代码在进程存活期有效，reload 会重新加载。
+
+会话期：在 onConnect 或 第一次onReceive 时创建，onClose 时销毁。
+        客户端连接后创建的对象会常驻内存，直到此客户端离开才销毁。
+
+请求期：在 onReceive/onRequest 收到请求开始，直到发送 Response 返回。
+        请求期创建的对象会在请求完成后销毁，和 fpm 程序中的对象一样。
+```
+
+## 全局配置选项详解
+
+Swoole\Server::set 用于设置 Server 运行时的各项参数，使用数组元素配置。
+
+Swoole 的难点除了系统和网络外，相当一部分原因是由于配置选项繁多，未做拆分，不利于学习。
+
+更多信息@doc https://wiki.swoole.com/wiki/page/274.html
+
+## 事件回调函数详解
+
+Swoole\Server 是事件驱动模式，所有的业务逻辑代码必须写在事件回调函数中。当特定的网络事件发生后，底层会主动回调指定的 PHP 函数。
+
+更多信息@doc https://wiki.swoole.com/wiki/page/41.html
+
+事件执行顺序
+```
+所有事件回调均在 Server start 后发生。
+
+服务器关闭终止时最后一次事件是 onShutdown。
+
+服务器启动成功后，onStart / onManagerStart / onWorkerStart 会并发执行。
+
+onReceive / onConnect / onClose 在 worker 进程中触发。
+
+Worker / Task 进程启动和结束会分别调用 onWorkerStart / onWorkerStop。
+
+onTask 事件仅在 task 进程中发生。
+
+onFinish  事件仅在 worker 进程中发生。
+```
+

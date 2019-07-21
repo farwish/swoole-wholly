@@ -1,4 +1,11 @@
 <?php
+/**
+ * isolation.php
+ *
+ * github.com/farwish/swoole-wholly
+ *
+ * @author ercom
+ */
 
 $i = 0;
 
