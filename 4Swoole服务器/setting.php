@@ -11,16 +11,6 @@
 // 变量在启动后一直存在，直到整个程序结束运行才会销毁，reload 无效
 // 在Worker进程内对这些对象进行写操作时，会自动从共享内存中分离，变为进程全局对象
 
-use Sm\Http\Request;
-use Sm\Api\DefaultController;
-
-$dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) {
-    $r->addGroup('/public', function (FastRoute\RouteCollector $r) {
-        $r->addRoute('GET', '/default/{id:\d+}', ['DefaultController', 'index']);
-        $r->addRoute('POST', '/default', ['DefaultController', 'create']);
-    });
-});
-
 Swoole\Runtime::enableCoroutine();
 $serv = new Swoole\Http\Server('0.0.0.0', 7749);
 
@@ -183,41 +173,7 @@ $serv->on('Request', function ($request, $response) use ($dispatcher) {
     // 使用协程后事件回调函数将会并发地执行。
     // 协程是一种用户态线程实现，没有额外的调度消耗，仅占用内存.
     // 使用协程模式，可以理解为“每次事件回调函数都会创建一个新的线程去执行，事件回调函数执行完成后，线程退出”
-    //try {
-
-        if ($request->server['request_uri'] == '/favicon.ico') {
-            $response->status(404);
-            $response->end();
-        } else {
-
-            $routeInfo = $dispatcher->dispatch(
-                $request->server['request_method'],
-                $request->server['request_uri']
-            );
-
-            print_r($routeInfo);
-
-            //$dispatcher->dispatch();
-
-            //$response->end(json_encode($request->get));
-
-            $params = Request::getSwParams($request);
-            $response->end(json_encode($params));
-        }
-
-    //} catch (\Throwable $e) {
-        //echo $e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine() . PHP_EOL;
-        //$response->status(500);
-        //$response->end('Server error');
-    //}
-
-    // 数字并不是同时输出的，没有并发执行 sleep
-    //sleep(5);
-    //echo 1 . PHP_EOL;
-    //sleep(5);
-    //echo 2 . PHP_EOL;
-    //$response->end('<h1>a</h1>');
-
+    $response->end('<h1>a</h1>');
 });
 
 // worker / task 进程收到由 sendMessage 发送的管道消息时会触发
