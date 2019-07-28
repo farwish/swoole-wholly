@@ -168,7 +168,7 @@ $serv->on('Packet', function (swoole_server $server, string $data, array $client
 });
 
 // Http Server 不接受 onConnect, onReceive 事件回调，取而代之是 onRequest 事件类型
-$serv->on('Request', function ($request, $response) use ($dispatcher) {
+$serv->on('Request', function ($request, $response) {
     // 4.请求期
     // 使用协程后事件回调函数将会并发地执行。
     // 协程是一种用户态线程实现，没有额外的调度消耗，仅占用内存.
