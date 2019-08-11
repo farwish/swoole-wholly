@@ -150,7 +150,8 @@ onFinish  事件仅在 worker 进程中发生。
 Swoole\Http\Server
 
 ```
-继承自 Swoole\Server，是一个 HTTP 服务器，父类提供的 API 都可使用，它支持同步和异步两种模式。两种模式都支持维持大量 TCP 客户端连接，同步/异步 仅仅体现在对请求的处理方式上。
+继承自 Swoole\Server，是一个 HTTP 服务器，父类提供的 API 都可使用，它支持同步和异步两种模式。
+两种模式都支持维持大量 TCP 客户端连接，同步/异步 仅仅体现在对请求的处理方式上。
 
 Swoole\Http\Server 对 Http 协议的支持不完整，一般用作应用服务器，使用 Nginx 作为代理。
 ```
@@ -166,7 +167,8 @@ Swoole\Http\Server 同步模式
 Swoole\Http\Server 异步模式
 
 ```
-这种模式下整个服务器是异步非阻塞的，服务器可以应对大量并发连接和并发请求，但编程方式要使用异步 API，否则会退化为同步模式。
+这种模式下整个服务器是异步非阻塞的，服务器可以应对大量并发连接和并发请求，
+但编程方式要使用异步 API，否则会退化为同步模式。
 
 Swoole-4.3 版本已移除异步模块，建议使用 Coroutine 模式。
 ```
@@ -225,7 +227,8 @@ Http 响应对象，通过调用响应对象的方法来实现 Http 响应发送
 Chrome 产生两次请求
 
 ```
-Chrome 浏览器会自动请求一次 favicon.ico，可通过 $request->server 属性的 request_uri 键获取 URL 路径进行判断处理。
+Chrome 浏览器会自动请求一次 favicon.ico，
+可通过 $request->server 属性的 request_uri 键获取 URL 路径进行判断处理。
 ```
 
 GET、POST 请求尺寸
@@ -235,4 +238,151 @@ GET 请求头有尺寸限制，不可更改，如果请求不是正确的 Http �
 
 POST 请求尺寸受到 package_max_length 限制。
 ```
+
+## WebSocket 服务器
+
+Swoole\WebSocket\Server
+
+```
+继承自 Swoole\Http\Server，是实现了 WebSocket 协议的服务器，父类提供的 API 都可使用，
+通过几行 PHP 代码就可以写出一个异步非阻塞多进程的 WebSocket 服务器。
+```
+
+有哪些 WebSocket 客户端
+
+```
+浏览器内置的 JavaScript WebSocket 客户端。
+
+实现了 WebSocket 协议解析的程序都可以作为客户端。
+
+非 WebSocket 客户端不能与 WebSocket 服务器通信。
+```
+
+回调函数
+
+```
+除了接收 Swoole\Server 和 Swoole\Http\Server 基类的回调函数外，额外增加三个回调函数设置。
+
+onOpen      可选，客户端与服务器建立连接并完成握手时回调此函数
+
+onHandShake 可选，建立连接后进行握手，不使用内置 handshake 时候设置
+
+onMessage   必选，服务器收到客户端数据帧时回调此函数
+            参数一是 Server 对象，参数二是 Swoole\WebSocket\Frame 对象
+            Frame@doc https://wiki.swoole.com/wiki/page/987.html
+```
+
+方法列表
+
+```
+push            向 WebSocket 客户端连接发送数据
+exist           判断 WebSocket 客户端是否存在
+pack            打包 WebSocket 消息
+unpack          解析 WebSocket 数据帧
+disconnect      主动向 WebSocket 客户端发送关闭帧并关闭连接
+isEstablished   检查连接是否为有效的 WebSocket 客户端连接，
+                exist 仅判断是否为 TCP 连接，无法判断是否为已完成握手的 WebSocket 连接
+```
+
+预定义常量
+
+```
+WebSocket 数据帧类型
+WEBSOCKET_OPCODE_TEXT = 0x1     UTF-8 文本字符串数据
+WEBSOCKET_OPCODE_BINARY = 0x2   二进制数据
+WEBSOCKET_OPCODE_PING = 0x9     ping类型数据
+
+WebSocket 连接状态
+WEBSOCKET_STATUS_CONNECTION = 1 连接进入等待握手
+WEBSOCKET_STATUS_HANDSHAKE = 2  正在握手
+WEBSOCKET_STATUS_FRAME = 3      已握手成功过等待客户端发送数据帧
+```
+
+配置选项
+
+```
+通过 Server::set 传入配置选项：
+
+websocket_subprotocol   设置 WebSocket 子协议。
+                        设置后握手响应的 Http 头会增加 Sec-WebSocket-Protocol: {$websocket_subprotocol}
+                        具体使用参考 WebSocket 协议相关 RFC 文档
+
+open_websocket_close_frame  启用 WebSocket 协议中关闭帧(opcode 为 0x08)，在 onMessage 回调中接收，默认 false。
+                            开启后，可在 onMessage 回调中接收到 client 或 server 发送的关闭帧，可自行对其处理。
+```
+
+应用案例
+
+聊天程序: https://github.com/farwish/PCP/tree/master/Project/Swoole
+
+
+## Redis 服务器
+
+Swoole\Redis\Server
+
+```
+继承自 Swoole\Server，一个兼容 Redis 服务器端协议的 Server 程序。
+
+Swoole\Redis\Server 不需要设置 onReceive 回调。
+```
+
+可用客户端
+
+```
+任意编程语言的 Redis 客户端，包括 PHP 的 Redis 扩展和库。
+
+Swoole 扩展提供的异步 Redis 客户端。
+
+Redis 提供的命令行工具，包括 redis-cli。
+```
+
+提供方法
+
+```
+父类的所有方法和以下新增：
+
+setHandler      设置 Redis 命令字的处理器
+
+format          格式化命令响应数据
+```
+
+提供常量
+
+```
+主要用于 format 函数打包 Redis 响应数据:
+
+Server::NIL     返回 nil 数据
+Server::ERROR   返回错误码
+Server::STATUS  返回状态
+Server::INT     返回整数
+Server::STRING  返回字符串
+Server::SET     返回列表（数组）
+Server::MAP     返回 Map（关联数组）
+```
+
+## 毫秒定时器
+
+Swoole\Timer
+
+```
+毫秒精度的定时器。底层基于 epoll_wait（异步进程）和 settimer（同步进程）实现，
+数据结构使用最小堆，可支持添加大量定时器。
+
+底层不支持时间参数为 0 的定时器。
+```
+
+可用方法
+
+```
+tick        设置一个间隔时钟定时器，返回整数 id，会持续触发，直到调用 clear。
+after       设置一个一次性定时器，返回整数 id，执行完后就销毁，是非阻塞的。
+clear       使用定时器 id 来删除定时器，只作用于当前进程。
+clearAll    清除所有的定时器（需要 swoole-4.4 及以上）
+info        返回 timer 的信息（需要 swoole-4.4 及以上）
+list        返回定时器迭代器，可用 foreach 遍历（需要 swoole-4.4 及以上）
+stats       返回统计信息（需要 swoole-4.4 及以上）
+```
+
+@doc https://wiki.swoole.com/wiki/page/p-timer.html
+
 
