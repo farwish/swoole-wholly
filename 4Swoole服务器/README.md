@@ -385,4 +385,74 @@ stats       返回统计信息（需要 swoole-4.4 及以上）
 
 @doc https://wiki.swoole.com/wiki/page/p-timer.html
 
+## 执行异步任务
+
+Swoole 异步任务
+
+```
+Server 程序中如果需要执行耗时的操作，worker 进程使用 $server->task() 向 task worker 投递任务，
+使当前进程不阻塞，不影响当前请求的处理速度。
+（必须设置了 task_worker_num 才能使用 task 回调函数）
+```
+
+注意事项
+
+```
+设置的 onTask 回调函数在 task 进程池内异步执行，执行完后使用 return 非null的变量
+或者调用 $server->finish() 来返回结果。
+
+return 和 $server->finish() 操作都是可选的，onTask 可以不返回任何结果。
+
+onTask 返回结果才会触发 onFinish 回调，执行 onFinish 逻辑的 worker 进程和下发 task 任务的 worker 是同一进程。
+```
+
+回调原型
+
+```
+onTask(Swoole\Server $server, int $taskId, int $srcWorkerId, mix $data)
+
+onTask(Swoole\Server $server, Swoole\Server\Task $task)
+swoole-4.2.12起，开启了 task_enable_coroutine 之后的函数原型，信息存储在 $task 对象的属性上。
+
+onFinish(Swoole\Server $server, int $taskId, string $data)
+```
+
+## 网络通信协议设计
+
+通信协议解决的问题
+
+```
+TCP 协议是流式传输协议，应用需要处理分包和合包才能有效获取数据，比如 HTTP、FTP、SMTP、Redis、MySQL 等都是基于 TCP 的协议，
+它们都实现了自己的数据解析方式，方便应用层进行使用。
+
+Swoole 底层支持 2 种类型的自定义网络通信协议：EOF 结束符协议、固定包头加包体协议
+```
+
+EOF 结束符协议
+
+```
+原理是每个数据包结尾加一串自定义的特殊字符表示数据包的结束。
+使用 EOF 协议，要确保数据包中间不会出现 EOF 字符，否则会分包错误。
+
+$server->set([
+    'open_eof_split' => true,
+    'package_eof'    => '\r\n',
+]);
+```
+
+固定包头加包体协议
+
+```
+原理是一个数据包总是由包头和包体两部分组成。
+包头由一个字段 指定了包体或者整个包的长度，长度一般是使用 2 字节或 4 字节整数表示，
+服务器收到包头后，根据长度值来控制需要再接收多少数据才是完整的数据包。
+
+$server->set([
+    'open_length_check' => true,
+    'package_max_length' => 81920,
+    'package_length_type' => 'n', // 和 pack 函数用法一致
+    'package_length_offset' => 0,
+    'package_body_offset' => 2,
+]);
+```
 
