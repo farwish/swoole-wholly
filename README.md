@@ -1,24 +1,12 @@
-# Swoole 通信引擎
+# Swoole 入门到进阶
 
-导学
+本课程帮助大家较为轻松入门 Swoole，掌握 Swoole 几乎所有常见用法，为工作中应用打下坚实基础。
 
-运行环境
+```
+Swoole 是面向生产环境的 PHP 异步网络通信引擎，使 PHP 开发人员可以编写高性能的异步并发 TCP、UDP、Unix Socket、HTTP 和 WebSocket 服务。
 
-Swoole 编程须知
+Swoole 可以广泛应用于互联网、移动通信、企业软件、云计算、网络游戏、物联网、车联网和智能家居等领域。
 
-Swoole 服务器
-
-Swoole 协程
-
-Swoole 共享内存
-
-Swoole 多进程
-
-Swoole 客户端
-
-Swoole 高级部分
-
-Swoole 其它
-
-总结
+使用 PHP+Swoole 作为网络通信框架，可以使企业IT研发团队的效率大大提升，更加专注于开发创新产品。
+```
 
