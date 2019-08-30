@@ -1,6 +1,6 @@
 # Swoole 入门到进阶
 
-本课程帮助大家较为轻松入门 Swoole，掌握 Swoole 几乎所有常见用法，为工作中应用打下坚实基础。
+swoole-wholly 帮助大家较为轻松入门 Swoole，掌握 Swoole 几乎所有常见用法，为工作中应用打下坚实基础。
 
 ```
 Swoole 是面向生产环境的 PHP 异步网络通信引擎，使 PHP 开发人员可以编写高性能的异步并发 TCP、UDP、Unix Socket、HTTP 和 WebSocket 服务。
