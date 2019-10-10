@@ -13,8 +13,8 @@
     https://github.com/phvia/dkc#安装-docker
 
 2.拉取镜像  
-    docker pull phvia/web-swoole-4.2.13:7.1.19-fpm
+    docker pull phvia/php:7.3.9-fpm_swoole-4.3.5_web
 
 3.运行进入容器  
-    docker run -it -p 7749:7749 -v /home/ubuntu:/usr/share/nginx/html ImageID bash
+    docker run -it -p 7749:7749 -v /home/ubuntu:/usr/share/nginx/html <ImageID> bash
 

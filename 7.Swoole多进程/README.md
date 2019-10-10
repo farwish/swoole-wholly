@@ -1,0 +1,216 @@
+# Swoole 多进程
+
+## 创建子进程 (process.php)
+
+最新可用镜像
+
+```
+拉取镜像： docker pull phvia/php:7.3.9-fpm_swoole-4.3.5_web
+
+运行并进入容器：docker run -it -p 7749:7749 –v <YourDir>:/usr/share/nginx/html <ImageID> bash
+```
+
+Swoole\Process
+
+```
+Swoole 的进程管理模块，可以作为 PHP pcntl 的易用版本。
+
+与 pcntl 相比的几点优势：
+
+    * 集成了进程间通信的 API。
+
+    * 支持重定向标准输入输出。
+
+    * 面向对象的操作 API 易于使用。
+```
+
+创建子进程
+
+```
+Swoole\Process::__construct(callable $function, bool $redirect_stdin_stdout = false, int $pipe_type = SOCK_DGRAM, bool $enable_coroutine = false);
+
+$function               子进程创建成功后要执行的函数。
+$redirect_stdin_stdout  是否重定向子进程的标准输入和输出
+$pipe_type              管道类型，启用第二个参数后，值将被忽略 强制为1。
+$enable_coroutine       默认为 false, (4.3.0)开启后可以在 callback 中使用协程API。
+```
+
+启动进程
+
+```
+Process->start(): int|bool
+
+创建成功返回子进程的 PID，创建失败返回 false。可以使用 swoole_errno( )、swoole_strerror(int $errno) 获取当前的错误码和错误信息。
+
+$process->pid   子进程的 PID
+$process->pipe  管道的文件描述符
+```
+
+修改进程名称
+
+```
+Process->name(`php worker`)
+
+可以修改主进程名，修改子进程名是在 start 之后的子进程回调函数中使用；此方法是 swoole_set_process_name 的别名。
+```
+
+执行一个外部程序
+
+```
+Process->exec(string $execfile, array $args): bool
+
+执行成功后，当前进程的代码段将会被新程序替换。子进程空间变成另外一套程序。作用类似 pcntl_exec.
+
+$execfile   可执行文件的绝对路径，如 /bin/echo
+$args       参数列表，如 [`AAA`]
+```
+
+退出子进程
+
+```
+Process->exit(int $status = 0): int
+
+$status 退出进程的状态码，如果为 0 表示正常结束，会继续执行清理工作。
+包括：PHP 的 shutdown_function；对象析构 __destruct；其他扩展的 RSHUTDOWN 函数。
+
+如果 $status 不为 0，表示异常退出，会立即终止进程，不再执行清理工作。
+```
+
+设置 CPU 亲和性
+
+```
+Process::setAffinity(array $cpu_set)
+
+可以将进程绑定到特定的 CPU 核上，作用是让进程只在某几个 CPU 核上运行，让出某些 CPU 资源执行更重要的程序。
+接受一个数组绑定哪些 CPU 核，如 [0, 2, 3] 表示绑定 CPU0、CPU2、CPU3。
+
+使用 swoole_cpu_num( ) 可以得到当前服务器的 CPU 核数。
+```
+
+代码库
+
+```
+可用镜像版本    hub.docker.com/r/phvia/php/tags
+
+镜像构建的代码  https://github.com/phvia/dkc
+```
+
+## 管道数据读写 (write_read.php)
+
+向管道内写入数据
+
+```
+Process->write(string $data) int | bool;
+
+在子进程内调用 write，父进程可以调用 read 接收此数据
+在父进程内调用 write，子进程可以调用 read 接收此数据
+```
+
+从管道中读取数据
+
+```
+Process->read(int $buffer_size = 8192): string
+
+$buffer_size 是缓冲区的大小，默认为 8192，最大不超过 64K。
+管道类型为 DGRAM 数据时，read 可以读取完整的一个数据包。
+管道类型为 STREAM 时，read 是流式的，需要自行处理完整性问题。
+读取成功返回二进制数据字符串，读取失败返回 false。
+```
+
+关闭创建好的管道
+
+```
+Process->close(int $which = 0)
+
+$which 指定关闭哪一个管道。
+默认为 0 表示同时关闭读和写，1 关闭读，2 关闭写。
+```
+
+设置管道读写操作的超时时间
+
+```
+Process->setTimeout(double $timeout): bool
+
+$timeout 单位为秒，支持浮点型；设置成功返回 true，设置失败返回 false。
+设置成功后，调用 recv 和 write 在规定时间内未读取或写入成功，将返回 false。
+```
+
+设置管道是否为阻塞模式
+
+```
+Process->setBlocking(bool $blocking = true)
+
+$blocking 默认为 true 同步阻塞，设置为 false 时管道为非阻塞模式。
+```
+
+将管道导出为 Coroutine\Socket 对象
+
+```
+Process->exportSocket( ): Swoole\Coroutine\Socket
+
+多次调用此方法，返回的对象是同一个。
+进程未创建管道，操作失败，返回 false。
+```
+
+## 消息队列通信 (push_pop.php)
+
+启用消息队列作为进程间通信
+
+```
+Process->useQueue(int $msgKey = 0, int $mode = 2, int $capacity = 8192): bool
+
+$msgKey 是消息队列的 key，默认会使用 ftok(__FILE__, 1) 作为 KEY。
+$mode 通信模式，默认为 2，表示争抢模式，所有子进程都会从队列中取数据。
+$capacity 单个消息长度，长度受限于操作系统内核参数的限制，默认为 8192，最大不超过 65536。
+```
+
+查看消息队列状态
+
+```
+Process->statQueue(): array
+
+返回的数组中包括 2 项，queue_num 队列中的任务数量，queue_bytes 队列数据的总字节数。
+```
+
+删除队列
+
+```
+Process->freeQueue( )
+
+此方法与 useQueue 成对使用，useQueue 创建，freeQueue 销毁，销毁队列后，队列中的数据会被清空。
+如果只调用 useQueue, 未调用 freeQueue，在程序结束时并不会清除数据，重新运行程序可以继续读取上次运行时留下的数据。
+```
+
+投递数据到消息队列中
+
+```
+Process->push(string $data): bool
+
+$data 要投递的数据，长度受限于操作系统内核参数的限制。
+默认阻塞模式，如果队列已满，push 方法会阻塞等待。
+非阻塞模式下，如果队列已满，push 方法会立即返回 false。
+```
+
+从队列中提取数据
+
+```
+Process->pop(int $maxsize = 8192): string|bool
+
+$maxsize 表示获取数据的最大尺寸，默认为 8192
+操作成功会返回提取到的数据内容，失败返回 false
+默认阻塞模式下，如果队列中没有数据，pop 方法会阻塞等待
+非阻塞模式下，如果队列中没有数据，pop 方法会立即返回 false，并设置错误码为 ENOMSG
+```
+
+## 守护进程化 (daemon.php)
+
+使当前进程蜕变为一个守护进程
+
+```
+Process::daemon(bool $nochdir = true, bool $noclose = false)
+
+$nochdir 为 true 表示不要切换当前目录到根目录
+$noclose 为 true 表示不要关闭标准输入输出文件描述符
+
+蜕变为守护进程时，进程 PID 将发生变化，可以使用 getmypid( ) 获取当前PID。
+```
