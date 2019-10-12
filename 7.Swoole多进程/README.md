@@ -266,7 +266,7 @@ $type 定时器类型，
 2 表示用户态 + 内核态时间，触发 SIGPROF 信号。
 ```
 
-## 进程池
+## 进程池 (pool.php)
 
 Swoole\Process\Pool
 
