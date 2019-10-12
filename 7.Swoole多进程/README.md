@@ -214,3 +214,127 @@ $noclose 为 true 表示不要关闭标准输入输出文件描述符
 
 蜕变为守护进程时，进程 PID 将发生变化，可以使用 getmypid( ) 获取当前PID。
 ```
+
+## 信号监听 (signal.php)
+
+设置异步信号监听
+
+```
+Process::signal(int $signo, callable $callback): bool
+
+此方法基于 signalfd 和 eventloop，是异步 IO，不能用于同步程序中。
+同步阻塞的程序可以使用 pcntl 扩展提供的 pcntl_signal。
+$callback 如果为 null，表示移除信号监听。
+如果已设置信号回调函数，重新设置时会覆盖历史设置。
+```
+
+回收结束运行的子进程
+
+```
+Process::wait(bool $blocking = true): array|bool
+
+子进程结束必须要执行 wait 进程回收，否则子进程会变成僵尸进程。
+
+$blocking 参数可以指定是否阻塞等待，默认为阻塞。
+
+操作成功会返回一个数组包含子进程的 PID、退出状态码、被哪种信号 kill，
+如：['pid' => 15001, 'code' => 0, 'signal' => 15]，失败返回 false。
+```
+
+向指定 PID 进程发送信号
+
+```
+Process::kill($pid, $signo = SIGTERM): bool
+
+默认的信号为 SIGTERM，表示终止进程
+
+$signo = 0 可以检测进程是否存在，不会发送信号。
+```
+
+高进度定时器
+
+```
+Process::alarm(int $interval_usec, int $type = 0): bool
+
+定时器会触发信号，需要与 Process::signal 或 pcntl_signal 配合使用。
+
+$interval_usec 定时器间隔时间，单位为微秒，如果为负数表示清除定时器。
+
+$type 定时器类型，
+0 表示为真实时间，触发 SIGALAM 信号；
+1 表示用户态 CPU 时间，触发 SIGVTALAM 信号；
+2 表示用户态 + 内核态时间，触发 SIGPROF 信号。
+```
+
+## 进程池
+
+Swoole\Process\Pool
+
+```
+进程池，基于 Server 的 Manager 模块实现，可管理多个工作进程。
+相比 Process 实现多进程，Process\Pool 更加简单，封装层次更高，开发者无需编写过多代码即可实现进程管理功能。
+
+SWOOLE_IPC_MSGQUEUE     系统消息队列通信
+SWOOLE_IPC_SOCKET       SOCKET通信
+SWOOLE_IPC_UNIXSOCK     Unix Socket 通信
+```
+
+创建进程池
+
+```
+Process\Pool->__construct(int $worker_num, int $ipc_type = 0, int $msgqueue_key = 0, bool $enable_coroutine = false)
+
+$worker_num         指定工作进程的数量
+$ipc_type           进程间通信的模式，默认为 0 表示不使用任何进程间通信特性
+$msgqueue_key       使用消息队列通信模式时，可设置消息队列的键
+$enable_coroutine   (4.4版本)启用协程
+```
+
+设置进程池回调函数
+
+```
+Process\Pool->on(string $event, callable $function)
+
+onWorkerStart(Process\Pool $pool, int $workerId)	子进程启动(必须设置)
+onWorkerStop(Process\Pool $pool, int $workerId)	子进程结束
+onMessage(Process\Pool $pool, string $data)		消息接收
+```
+
+监听 SOCKET
+
+```
+Process\Pool->listen(string $host, int $port = 0, int $backlog = 2048): bool
+
+$host    监听的地址，支持 TCP、UnixSocket 类型
+$port    监听的端口，TCP 模式下指定
+$backlog 监听的队列长度
+```
+
+向对端写入数据
+
+```
+Process\Pool->write(string $data)
+
+$data   写入的数据内容。
+
+多次调用 write，底层会在 onMessage 函数退出后将全部数据写入 socket 中，并 close 连接。发送操作是同步阻塞的。内存操作，无 IO 消耗。
+```
+
+启动工作进程
+
+```
+Process\Pool->start(): bool
+
+启动成功，当前进程进入 wait 装填，管理工作进程
+启动失败，返回 false，可使用 swoole_errno 获取错误码
+```
+
+获取当前工作进程对象
+
+```
+Process\Pool->getProcess($worker_id): Process
+
+$worker_id  可选参数，指定获取 worker，默认当前 worker
+
+必须在 start 之后，在工作进程的 onWorkerStart 或其他回调函数中调用，返回的 Process 对象是单例模式，在工作进程中重复调用 getProcess() 将返回一个对象。
+```
