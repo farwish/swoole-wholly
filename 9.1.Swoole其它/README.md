@@ -61,8 +61,70 @@ SWOOLE_TRACE_SERVER, SWOOLE_TRACE_CLIENT, SWOOLE_TRACE_BUFFER, SWOOLE_TRACE_CONN
 
 ### Swoole辅助函数
 
-php.ini 选项
+设置进程名称
 
+```
+void swoole_set_process_name(string $name)
+
+可用于 PHP5.2 以上版本，此函数与 PHP5.5 提供的 cli_set_process_title 功能是相同的，
+兼容性比 cli_set_process_title 要差，优先使用 cli_set_process_title。
+```
+
+SWOOLE 扩展版本
+
+```
+string swoole_version()
+
+返回当前执行的 PHP 安装的 Swoole 扩展版本。
+```
+
+错误码转换成错误信息
+
+```
+string swoole_strerror(int $errno, int $error_type = 1)
+```
+
+最近一次系统调用的错误码
+
+```
+int swoole_errno()
+```
+
+获取最近一次 SWOOLE 底层的错误码
+
+```
+int swoole_last_error()
+```
+
+获取本机所有网络接口的 IP 地址
+
+```
+array swoole_get_local_ip()
+```
+
+清除 SWOOLE 内置的 DNS 缓存
+
+```
+void swoole_clear_dns_cache()
+
+对 swoole_client 和 swoole_async_dns_lookup 有效。
+```
+
+获取本机网卡 Mac 地址
+
+```
+void swoole_get_local_mac()
+
+调用成功返回所有网卡的 Mac 地址。
+```
+
+获取本机 CPU 核数
+
+```
+int swoole_cpu_num()
+
+调用成功返回 CPU 核数。
+```
 
 ### PHP选项与内核参数
 
